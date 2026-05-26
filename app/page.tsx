@@ -14,24 +14,30 @@ export default function Home() {
   }
 
   return (
-    <div
+    <main
       style={{
         minHeight: '100vh',
-        backgroundColor: '#000',
+        backgroundImage:
+          'linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.85)), url("/fundo-inicial.png")',
         display: 'flex',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
+
       }}
     >
       <div
         style={{
-          backgroundColor: 'white',
-          padding: 40,
-          borderRadius: 20,
           width: '100%',
-          maxWidth: 500,
-          textAlign: 'center',
+          maxWidth: 550,
+          background: 'rgba(255,255,255,0.08)',
+          backdropFilter: 'blur(12px)',
+          borderRadius: 30,
+          padding: 40,
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
           position: 'relative',
         }}
       >
@@ -42,84 +48,128 @@ export default function Home() {
           🚪 Sair
         </button>
 
-        <h1
+        <div
           style={{
-            color: '#2563eb',
-            marginBottom: 30,
+            textAlign: 'center',
+            marginBottom: 40,
           }}
         >
-          🏆 Gincana do EPA
-        </h1>
+          <div
+            style={{
+              fontSize: 70,
+              marginBottom: 10,
+            }}
+          >
+            🏆
+          </div>
+
+          <h1
+            style={{
+              color: 'white',
+              fontSize: 38,
+              fontWeight: 'bold',
+              marginBottom: 10,
+            }}
+          >
+            Gincana do EPA
+          </h1>
+
+          <p
+            style={{
+              color: '#cbd5e1',
+              fontSize: 16,
+            }}
+          >
+            Sistema oficial de pontuação
+          </p>
+        </div>
 
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 15,
+            gap: 18,
           }}
         >
           <Link href='/participantes'>
-            <button style={botao}>
-              Participantes
+            <button style={botaoAzul}>
+              👥 Participantes
             </button>
           </Link>
 
           <Link href='/encontros'>
-            <button style={botao}>
-              Encontros
+            <button style={botaoAzul}>
+              📅 Encontros
             </button>
           </Link>
 
           <Link href='/pontuacoes'>
-            <button style={botao}>
-              Pontuações
+            <button style={botaoAzul}>
+              🎯 Pontuações
             </button>
           </Link>
 
           <Link href='/ranking'>
-            <button style={botaoRanking}>
+            <button style={botaoVerde}>
               🏆 Ranking Público
             </button>
           </Link>
         </div>
+
+        <div
+          style={{
+            marginTop: 35,
+            textAlign: 'center',
+            color: '#94a3b8',
+            fontSize: 14,
+          }}
+        >
+          Desenvolvido para a Gincana EPA ✨
+        </div>
       </div>
-    </div>
+    </main>
   )
 }
 
-const botao = {
+const botaoAzul = {
   width: '100%',
-  padding: 15,
-  backgroundColor: '#2563eb',
-  color: 'white',
+  padding: 18,
+  borderRadius: 16,
   border: 'none',
-  borderRadius: 10,
-  fontSize: 16,
+  background:
+    'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+  color: 'white',
+  fontSize: 17,
   fontWeight: 'bold' as const,
   cursor: 'pointer',
+  transition: '0.3s',
+  boxShadow: '0 6px 20px rgba(37,99,235,0.35)',
 }
 
-const botaoRanking = {
+const botaoVerde = {
   width: '100%',
-  padding: 15,
-  backgroundColor: '#16a34a',
-  color: 'white',
+  padding: 18,
+  borderRadius: 16,
   border: 'none',
-  borderRadius: 10,
-  fontSize: 16,
+  background:
+    'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+  color: 'white',
+  fontSize: 17,
   fontWeight: 'bold' as const,
   cursor: 'pointer',
+  transition: '0.3s',
+  boxShadow: '0 6px 20px rgba(22,163,74,0.35)',
 }
 
 const botaoLogout = {
   position: 'absolute' as const,
   top: 20,
   right: 20,
-  padding: '8px 12px',
+  padding: '10px 14px',
+  borderRadius: 12,
+  border: 'none',
   backgroundColor: '#dc2626',
   color: 'white',
-  border: 'none',
-  borderRadius: 8,
-  cursor: 'pointer',
   fontWeight: 'bold' as const,
+  cursor: 'pointer',
 }
