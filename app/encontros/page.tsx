@@ -12,6 +12,8 @@ export default function EncontrosPage() {
   const [dataEncontro, setDataEncontro] = useState('')
   const [observacoes, setObservacoes] = useState('')
 
+  const [editandoId, setEditandoId] = useState<number | null>(null)
+
   async function buscarEncontros() {
     const { data, error } = await supabase
       .from('encontros')
@@ -25,12 +27,37 @@ export default function EncontrosPage() {
     }
   }
 
-  async function cadastrarEncontro() {
+  async function salvarEncontro() {
     if (!titulo || !dataEncontro) {
       alert('Preencha os campos obrigatórios')
       return
     }
 
+    // EDITAR
+    if (editandoId) {
+      const { error } = await supabase
+        .from('encontros')
+        .update({
+          titulo,
+          data_encontro: dataEncontro,
+          observacoes,
+        })
+        .eq('id', editandoId)
+
+      if (error) {
+        console.log(error)
+        alert('Erro ao editar encontro')
+      } else {
+        alert('Encontro atualizado')
+
+        limparFormulario()
+        buscarEncontros()
+      }
+
+      return
+    }
+
+    // CADASTRAR
     const { error } = await supabase
       .from('encontros')
       .insert([
@@ -45,18 +72,63 @@ export default function EncontrosPage() {
       console.log(error)
       alert('Erro ao cadastrar encontro')
     } else {
-      alert('Encontro cadastrado com sucesso')
+      alert('Encontro cadastrado')
 
-      setTitulo('')
-      setDataEncontro('')
-      setObservacoes('')
+      limparFormulario()
+      buscarEncontros()
+    }
+  }
+
+  function editarEncontro(encontro: any) {
+    setTitulo(encontro.titulo)
+    setDataEncontro(encontro.data_encontro)
+    setObservacoes(encontro.observacoes || '')
+
+    setEditandoId(encontro.id)
+  }
+
+  async function excluirEncontro(id: number) {
+    const confirmar = confirm(
+      'Deseja realmente excluir este encontro?'
+    )
+
+    if (!confirmar) return
+
+    const { error } = await supabase
+      .from('encontros')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.log(error)
+      alert('Erro ao excluir encontro')
+    } else {
+      alert('Encontro removido')
 
       buscarEncontros()
     }
   }
 
+  function limparFormulario() {
+    setTitulo('')
+    setDataEncontro('')
+    setObservacoes('')
+
+    setEditandoId(null)
+  }
+
   useEffect(() => {
-    buscarEncontros()
+    async function verificar() {
+      const session = await verificarLogin()
+
+      if (!session) {
+        window.location.href = '/login'
+      } else {
+        buscarEncontros()
+      }
+    }
+
+    verificar()
   }, [])
 
   return (
@@ -76,7 +148,7 @@ export default function EncontrosPage() {
           padding: 30,
           borderRadius: 20,
           width: '100%',
-          maxWidth: 800,
+          maxWidth: 900,
           boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
         }}
       >
@@ -102,7 +174,9 @@ export default function EncontrosPage() {
         <hr />
 
         <h2 style={{ color: 'black' }}>
-          Cadastro de Encontro
+          {editandoId
+            ? '✏️ Editando encontro'
+            : 'Cadastro de Encontro'}
         </h2>
 
         <div
@@ -139,11 +213,35 @@ export default function EncontrosPage() {
           />
 
           <button
-            onClick={cadastrarEncontro}
-            style={botaoCadastrar}
+            onClick={salvarEncontro}
+            style={{
+              ...botaoCadastrar,
+              backgroundColor: editandoId
+                ? '#f59e0b'
+                : '#2563eb',
+            }}
           >
-            Cadastrar Encontro
+            {editandoId
+              ? 'Salvar Alterações'
+              : 'Cadastrar Encontro'}
           </button>
+
+          {editandoId && (
+            <button
+              onClick={limparFormulario}
+              style={{
+                padding: 12,
+                backgroundColor: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontWeight: 'bold',
+              }}
+            >
+              Cancelar edição
+            </button>
+          )}
         </div>
 
         <hr />
@@ -177,6 +275,7 @@ export default function EncontrosPage() {
                 <th>Título</th>
                 <th>Data</th>
                 <th>Observações</th>
+                <th>Ações</th>
               </tr>
             </thead>
 
@@ -186,6 +285,48 @@ export default function EncontrosPage() {
                   <td>{encontro.titulo}</td>
                   <td>{encontro.data_encontro}</td>
                   <td>{encontro.observacoes}</td>
+
+                  <td>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 10,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <button
+                        onClick={() =>
+                          editarEncontro(encontro)
+                        }
+                        style={{
+                          backgroundColor: '#f59e0b',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 12px',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ✏️
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          excluirEncontro(encontro.id)
+                        }
+                        style={{
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 12px',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

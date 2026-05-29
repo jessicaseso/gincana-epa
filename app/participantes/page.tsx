@@ -14,6 +14,8 @@ export default function ParticipantesPage() {
   const [sobrenome, setSobrenome] = useState('')
   const [dataNascimento, setDataNascimento] = useState('')
 
+  const [editandoId, setEditandoId] = useState<number | null>(null)
+
   async function buscarParticipantes() {
     const { data, error } = await supabase
       .from('pre_adolescentes')
@@ -27,12 +29,37 @@ export default function ParticipantesPage() {
     }
   }
 
-  async function cadastrarParticipante() {
+  async function salvarParticipante() {
     if (!nome || !sobrenome || !dataNascimento) {
       alert('Preencha todos os campos')
       return
     }
 
+    // EDITAR
+    if (editandoId) {
+      const { error } = await supabase
+        .from('pre_adolescentes')
+        .update({
+          nome,
+          sobrenome,
+          data_nascimento: dataNascimento,
+        })
+        .eq('id', editandoId)
+
+      if (error) {
+        console.log(error)
+        alert('Erro ao editar')
+      } else {
+        alert('Participante atualizado')
+
+        limparFormulario()
+        buscarParticipantes()
+      }
+
+      return
+    }
+
+    // CADASTRAR
     const { error } = await supabase
       .from('pre_adolescentes')
       .insert([
@@ -45,16 +72,51 @@ export default function ParticipantesPage() {
 
     if (error) {
       console.log(error)
-      alert('Erro ao cadastrar')
+      alert(error.message)
     } else {
-      alert('Participante cadastrado com sucesso')
+      alert('Participante cadastrado')
 
-      setNome('')
-      setSobrenome('')
-      setDataNascimento('')
+      limparFormulario()
+      buscarParticipantes()
+    }
+  }
+
+  function editarParticipante(participante: any) {
+    setNome(participante.nome)
+    setSobrenome(participante.sobrenome)
+    setDataNascimento(participante.data_nascimento)
+
+    setEditandoId(participante.id)
+  }
+
+  async function excluirParticipante(id: number) {
+    const confirmar = confirm(
+      'Deseja realmente excluir este participante?'
+    )
+
+    if (!confirmar) return
+
+    const { error } = await supabase
+      .from('pre_adolescentes')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.log(error)
+      alert('Erro ao excluir')
+    } else {
+      alert('Participante removido')
 
       buscarParticipantes()
     }
+  }
+
+  function limparFormulario() {
+    setNome('')
+    setSobrenome('')
+    setDataNascimento('')
+
+    setEditandoId(null)
   }
 
   useEffect(() => {
@@ -88,7 +150,7 @@ export default function ParticipantesPage() {
           padding: 30,
           borderRadius: 20,
           width: '100%',
-          maxWidth: 700,
+          maxWidth: 900,
           boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
         }}
       >
@@ -128,7 +190,9 @@ export default function ParticipantesPage() {
         <hr />
 
         <h2 style={{ color: 'black' }}>
-          Cadastro de Participante
+          {editandoId
+            ? '✏️ Editando participante'
+            : 'Cadastro de Participante'}
         </h2>
 
         <div
@@ -144,13 +208,7 @@ export default function ParticipantesPage() {
             placeholder='Nome'
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            style={{
-              padding: 12,
-              borderRadius: 8,
-              border: '1px solid #ccc',
-              color: 'black',
-              backgroundColor: 'white',
-            }}
+            style={inputStyle}
           />
 
           <input
@@ -158,33 +216,23 @@ export default function ParticipantesPage() {
             placeholder='Sobrenome'
             value={sobrenome}
             onChange={(e) => setSobrenome(e.target.value)}
-            style={{
-              padding: 12,
-              borderRadius: 8,
-              border: '1px solid #ccc',
-              color: 'black',
-              backgroundColor: 'white',
-            }}
+            style={inputStyle}
           />
 
           <input
             type='date'
             value={dataNascimento}
             onChange={(e) => setDataNascimento(e.target.value)}
-            style={{
-              padding: 12,
-              borderRadius: 8,
-              border: '1px solid #ccc',
-              color: 'black',
-              backgroundColor: 'white',
-            }}
+            style={inputStyle}
           />
 
           <button
-            onClick={cadastrarParticipante}
+            onClick={salvarParticipante}
             style={{
               padding: 12,
-              backgroundColor: '#2563eb',
+              backgroundColor: editandoId
+                ? '#f59e0b'
+                : '#2563eb',
               color: 'white',
               border: 'none',
               borderRadius: 8,
@@ -193,8 +241,27 @@ export default function ParticipantesPage() {
               fontSize: 16,
             }}
           >
-            Cadastrar
+            {editandoId
+              ? 'Salvar Alterações'
+              : 'Cadastrar'}
           </button>
+
+          {editandoId && (
+            <button
+              onClick={limparFormulario}
+              style={{
+                padding: 12,
+                backgroundColor: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontWeight: 'bold',
+              }}
+            >
+              Cancelar edição
+            </button>
+          )}
         </div>
 
         <hr />
@@ -227,7 +294,8 @@ export default function ParticipantesPage() {
               <tr>
                 <th>Nome</th>
                 <th>Sobrenome</th>
-                <th>Data de nascimento</th>
+                <th>Data</th>
+                <th>Ações</th>
               </tr>
             </thead>
 
@@ -237,6 +305,48 @@ export default function ParticipantesPage() {
                   <td>{participante.nome}</td>
                   <td>{participante.sobrenome}</td>
                   <td>{participante.data_nascimento}</td>
+
+                  <td>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 10,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <button
+                        onClick={() =>
+                          editarParticipante(participante)
+                        }
+                        style={{
+                          backgroundColor: '#f59e0b',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 12px',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ✏️
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          excluirParticipante(participante.id)
+                        }
+                        style={{
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 12px',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -245,4 +355,12 @@ export default function ParticipantesPage() {
       </div>
     </div>
   )
+}
+
+const inputStyle = {
+  padding: 12,
+  borderRadius: 8,
+  border: '1px solid #ccc',
+  color: 'black',
+  backgroundColor: 'white',
 }

@@ -94,13 +94,12 @@ export default function PontuacoesPage() {
           biblia: biblia ? 10 : 0,
           visitante: visitante ? 10 : 0,
           extra: extra ? 10 : 0,
-          total,
         },
       ])
 
     if (error) {
       console.log(error)
-      alert('Erro ao salvar pontuação')
+      alert(error.message)
     } else {
       alert('Pontuação salva com sucesso')
 
