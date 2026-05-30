@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import {Medal, Trophy, Crown, Star} from 'lucide-react'
 
 export default function RankingPage() {
   const [ranking, setRanking] = useState<any[]>([])

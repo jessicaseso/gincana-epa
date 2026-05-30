@@ -9,7 +9,7 @@ export default function ParticipantesPage() {
   const router = useRouter()
 
   const [participantes, setParticipantes] = useState<any[]>([])
-
+  const [busca, setBusca] = useState('')
   const [nome, setNome] = useState('')
   const [sobrenome, setSobrenome] = useState('')
   const [dataNascimento, setDataNascimento] = useState('')
@@ -118,6 +118,16 @@ export default function ParticipantesPage() {
 
     setEditandoId(null)
   }
+  const participantesFiltrados =
+  participantes.filter((participante) =>
+    (
+      participante.nome +
+      ' ' +
+      participante.sobrenome
+    )
+      .toLowerCase()
+      .includes(busca.toLowerCase())
+  )
 
   useEffect(() => {
     async function verificar() {
@@ -269,7 +279,25 @@ export default function ParticipantesPage() {
         <h2 style={{ color: 'black' }}>
           Participantes cadastrados
         </h2>
-
+        
+        <input
+          type='text'
+          placeholder='🔎 Buscar participante...'
+          value={busca}
+          onChange={(e) =>
+            setBusca(e.target.value)
+          }
+          style={{
+            padding: 12,
+            borderRadius: 8,
+            border: '1px solid #ccc',
+            width: '100%',
+            marginTop: 15,
+            marginBottom: 20,
+            color: 'black',
+            backgroundColor: 'white',
+          }}
+        />
         {participantes.length === 0 ? (
           <p style={{ color: 'black' }}>
             Nenhum participante encontrado.
@@ -300,7 +328,7 @@ export default function ParticipantesPage() {
             </thead>
 
             <tbody>
-              {participantes.map((participante) => (
+              {participantesFiltrados.map((participante) => (
                 <tr key={participante.id}>
                   <td>{participante.nome}</td>
                   <td>{participante.sobrenome}</td>

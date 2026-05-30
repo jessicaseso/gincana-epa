@@ -11,7 +11,7 @@ export default function PontuacoesPage() {
   const [participantes, setParticipantes] = useState<any[]>([])
   const [encontros, setEncontros] = useState<any[]>([])
   const [pontuacoes, setPontuacoes] = useState<any[]>([])
-
+  const [editandoId, setEditandoId] = useState<string | null>(null)
   const [participanteId, setParticipanteId] = useState('')
   const [encontroId, setEncontroId] = useState('')
 
@@ -43,7 +43,7 @@ export default function PontuacoesPage() {
           titulo
         )
       `)
-      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
 
     if (participantesResponse.data) {
       setParticipantes(participantesResponse.data)
@@ -63,19 +63,54 @@ export default function PontuacoesPage() {
       alert('Selecione participante e encontro')
       return
     }
+    
+    if (editandoId) {
+      const total =
+        (presenca ? 10 : 0) +
+        (biblia ? 10 : 0) +
+        (visitante ? 10 : 0) +
+        (extra ? 10 : 0)
 
-    const pontuacaoExistente = await supabase
-      .from('pontuacoes')
-      .select('*')
-      .eq('pre_adolescente_id', participanteId)
-      .eq('encontro_id', encontroId)
-      .single()
+      const { error } = await supabase
+        .from('pontuacoes')
+        .update({
+          pre_adolescente_id:participanteId,
+          encontro_id: encontroId,
+          presenca: presenca ? 10 : 0,
+          biblia: biblia ? 10 : 0,
+          visitante: visitante ? 10 : 0,
+          extra:
+            extra ? 10 : 0,
+        })
+        .eq('id', editandoId)
 
-    if (pontuacaoExistente.data) {
-      alert(
-        'Esse participante já possui pontuação nesse encontro.'
-      )
+      if (error) {
+        console.log(error)
+        alert(error.message)
+      } else {
+        alert('Pontuação atualizada')
+
+        limparFormulario()
+        buscarDados()
+      }
+
       return
+    }
+
+    if (!editandoId) {
+      const pontuacaoExistente = await supabase
+        .from('pontuacoes')
+        .select('*')
+        .eq('pre_adolescente_id', participanteId)
+        .eq('encontro_id', encontroId)
+        .single()
+
+      if (pontuacaoExistente.data) {
+        alert(
+          'Esse participante já possui pontuação nesse encontro.'
+        )
+        return
+      }
     }
 
     const total =
@@ -94,6 +129,7 @@ export default function PontuacoesPage() {
           biblia: biblia ? 10 : 0,
           visitante: visitante ? 10 : 0,
           extra: extra ? 10 : 0,
+          total,
         },
       ])
 
@@ -103,18 +139,53 @@ export default function PontuacoesPage() {
     } else {
       alert('Pontuação salva com sucesso')
 
-      setParticipanteId('')
-      setEncontroId('')
-
-      setPresenca(false)
-      setBiblia(false)
-      setVisitante(false)
-      setExtra(false)
+      limparFormulario()
 
       buscarDados()
     }
   }
+  function editarPontuacao(
+  pontuacao: any
+) {
+  setParticipanteId(
+    pontuacao.pre_adolescente_id
+  )
 
+  setEncontroId(
+    pontuacao.encontro_id
+  )
+
+  setPresenca(
+    pontuacao.presenca > 0
+  )
+
+  setBiblia(
+    pontuacao.biblia > 0
+  )
+
+  setVisitante(
+    pontuacao.visitante > 0
+  )
+
+  setExtra(
+    pontuacao.extra > 0
+  )
+
+  setEditandoId(
+    pontuacao.id
+  )
+}
+  function limparFormulario() {
+  setParticipanteId('')
+  setEncontroId('')
+
+  setPresenca(false)
+  setBiblia(false)
+  setVisitante(false)
+  setExtra(false)
+
+  setEditandoId(null)
+}
   async function excluirPontuacao(id: string) {
     const confirmar = confirm(
       'Deseja realmente excluir essa pontuação?'
@@ -302,8 +373,26 @@ export default function PontuacoesPage() {
             onClick={salvarPontuacao}
             style={botaoSalvar}
           >
-            Salvar Pontuação
+            {editandoId
+              ? 'Salvar Alterações'
+              : 'Salvar Pontuação'}
           </button>
+          {editandoId && (
+            <button
+              onClick={limparFormulario}
+              style={{
+                padding: 12,
+                backgroundColor: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontWeight: 'bold',
+              }}
+            >
+              Cancelar edição
+            </button>
+          )}
         </div>
 
         <hr style={{ margin: '30px 0' }} />
@@ -364,23 +453,49 @@ export default function PontuacoesPage() {
                   </td>
 
                   <td>
-                    <button
-                      onClick={() =>
-                        excluirPontuacao(
-                          pontuacao.id
-                        )
-                      }
+                    <div
                       style={{
-                        padding: 8,
-                        backgroundColor: '#dc2626',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: 6,
-                        cursor: 'pointer',
+                        display: 'flex',
+                        gap: 10,
+                        justifyContent: 'center',
                       }}
                     >
-                      Excluir
-                    </button>
+                      <button
+                        onClick={() =>
+                          editarPontuacao(
+                            pontuacao
+                          )
+                        }
+                        style={{
+                          padding: 8,
+                          backgroundColor: '#f59e0b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ✏️
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          excluirPontuacao(
+                            pontuacao.id
+                          )
+                        }
+                        style={{
+                          padding: 8,
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

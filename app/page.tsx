@@ -3,15 +3,170 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useEffect, useState } from 'react'
+import {Users,Calendar,Trophy,Target,LogOut,Cake, BarChart3,BookOpen,UserPlus, BadgeCheck} from 'lucide-react'
+
 
 export default function Home() {
   const router = useRouter()
+
+  const [aniversariantes, setAniversariantes] =
+  useState<any[]>([])
+
+  const [mesSelecionado, setMesSelecionado] =
+  useState(new Date().getMonth() + 1)
+
+  const [maisBiblia, setMaisBiblia] =
+    useState('')
+
+  const [maisVisitantes, setMaisVisitantes] =
+    useState('')
+
+  const [melhorPresenca, setMelhorPresenca] =
+    useState('')
 
   async function fazerLogout() {
     await supabase.auth.signOut()
 
     router.push('/login')
   }
+  
+  async function buscarAniversariantes() {
+    const { data } = await supabase
+      .from('pre_adolescentes')
+      .select('*')
+
+    if (!data) return
+
+    const filtrados = data.filter((p) => {
+      const mesNascimento =
+        new Date(
+          p.data_nascimento
+        ).getMonth() + 1
+
+      return (
+        mesNascimento ===
+        mesSelecionado
+      )
+    })
+
+    filtrados.sort((a, b) => {
+      const diaA = Number(
+        a.data_nascimento.split('-')[2]
+      )
+
+      const diaB = Number(
+        b.data_nascimento.split('-')[2]
+      )
+
+      return diaA - diaB
+    })
+
+    setAniversariantes(filtrados)
+  }
+  useEffect(() => {buscarAniversariantes()}, [mesSelecionado])
+
+    async function buscarDashboard() {
+    const { data: participantes } =
+      await supabase
+        .from('pre_adolescentes')
+        .select('*')
+
+    const { data: pontuacoes } =
+      await supabase
+        .from('pontuacoes')
+        .select('*')
+
+    if (!participantes || !pontuacoes)
+      return
+
+    // estatísticas
+
+    const rankingBiblia: any = {}
+    const rankingVisitante: any = {}
+    const rankingPresenca: any = {}
+
+    pontuacoes.forEach((item: any) => {
+      const participante =
+        participantes.find(
+          (p) =>
+            p.id ===
+            item.pre_adolescente_id
+        )
+
+      if (!participante) return
+
+      const nome =
+        participante.nome +
+        ' ' +
+        participante.sobrenome
+
+      rankingBiblia[nome] =
+        rankingBiblia[nome] || 0
+
+      rankingVisitante[nome] =
+        rankingVisitante[nome] || 0
+
+      rankingPresenca[nome] =
+        rankingPresenca[nome] || 0
+
+      if (item.biblia > 0)
+        rankingBiblia[nome]++
+
+      if (item.visitante > 0)
+        rankingVisitante[nome]++
+
+      if (item.presenca > 0)
+        rankingPresenca[nome]++
+    })
+
+    const campeaoBiblia =
+      Object.entries(
+        rankingBiblia
+      ).sort(
+        (a: any, b: any) =>
+          Number(b[1]) -
+          Number(a[1])
+      )[0]
+
+    const campeaoVisitante =
+      Object.entries(
+        rankingVisitante
+      ).sort(
+        (a: any, b: any) =>
+          Number(b[1]) -
+          Number(a[1])
+      )[0]
+
+    const campeaoPresenca =
+      Object.entries(
+        rankingPresenca
+      ).sort(
+        (a: any, b: any) =>
+          Number(b[1]) -
+          Number(a[1])
+      )[0]
+
+    setMaisBiblia(
+      String(
+        campeaoBiblia?.[0] || ''
+      )
+    )
+
+    setMaisVisitantes(
+      String(
+        campeaoVisitante?.[0] || ''
+      )
+    )
+
+    setMelhorPresenca(
+      String(
+        campeaoPresenca?.[0] || ''
+      )
+    )
+  }
+
+  useEffect(() => {buscarDashboard()}, [])
 
   return (
     <main
@@ -45,7 +200,7 @@ export default function Home() {
           onClick={fazerLogout}
           style={botaoLogout}
         >
-          🚪 Sair
+          <LogOut size={18} />
         </button>
 
         <div
@@ -93,29 +248,161 @@ export default function Home() {
         >
           <Link href='/participantes'>
             <button style={botaoAzul}>
-              👥 Participantes
+              <Users size={24} />
+              Participantes
             </button>
           </Link>
 
           <Link href='/encontros'>
             <button style={botaoAzul}>
-              📅 Encontros
+              <Calendar size={24} />
+              Encontros
             </button>
           </Link>
 
           <Link href='/pontuacoes'>
-            <button style={botaoAzul}>
-              🎯 Pontuações
-            </button>
+          <button style={botaoAzul}>
+            <Target size={24} />
+            Pontuações
+          </button>
           </Link>
 
           <Link href='/ranking'>
-            <button style={botaoVerde}>
-              🏆 Ranking Público
+           <button style={botaoVerde}>
+              <Trophy size={24} />
+              Ranking Público
             </button>
           </Link>
         </div>
+          <div
+            style={{
+              marginTop: 20,
+              background:
+                'rgba(255,255,255,0.08)',
+              borderRadius: 16,
+              padding: 20,
+              color: 'white',
+            }}
+          >
+            <h3
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <BarChart3 size={22} />
+              <strong>Estatísticas da Gincana</strong>
+            </h3>
 
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <BookOpen size={18} />
+                <strong> Mais leva Bíblia </strong>
+                  {maisBiblia || '-'} 
+                </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <UserPlus size={18} />
+                <strong> Mais trouxe visitantes </strong>
+                  {maisVisitantes || '-'}
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <BadgeCheck size={18} />
+               <strong>Melhor presença </strong> 
+                {melhorPresenca || '-'}
+              </div>
+          </div>            
+        <div
+          style={{
+            marginTop: 25,
+            background:
+              'rgba(255,255,255,0.08)',
+            borderRadius: 16,
+            padding: 20,
+            color: 'white',
+          }}
+        >
+          <h3
+            style={{
+              display: 'flex', 
+              alignItems: 'center',
+              gap: 8,
+            }}
+          > 
+            <Cake size={22} />
+            <strong> Aniversariantes </strong>
+          </h3>
+
+          <select
+            value={mesSelecionado}
+            onChange={(e) =>
+              setMesSelecionado(
+                Number(e.target.value)
+              )
+            }
+            style={{
+              width: '100%',
+              padding: 10,
+              borderRadius: 8,
+              marginBottom: 15,
+            }}
+          >
+            <option value={1}>Janeiro</option>
+            <option value={2}>Fevereiro</option>
+            <option value={3}>Março</option>
+            <option value={4}>Abril</option>
+            <option value={5}>Maio</option>
+            <option value={6}>Junho</option>
+            <option value={7}>Julho</option>
+            <option value={8}>Agosto</option>
+            <option value={9}>Setembro</option>
+            <option value={10}>Outubro</option>
+            <option value={11}>Novembro</option>
+            <option value={12}>Dezembro</option>
+          </select>
+
+          {aniversariantes.length === 0 ? (
+            <p>
+              Nenhum aniversariante
+            </p>
+            ) : (
+              aniversariantes.map((p) => {
+                const [ano, mes, dia] =
+                  p.data_nascimento.split('-')
+
+                return (
+                  <div
+                    key={p.id}
+                    style={{
+                      marginBottom: 8,
+                    }}
+                  >
+                    🎉 {dia}/{mes} - {p.nome} {p.sobrenome}
+                  </div>
+                )
+              })
+            )}        
+        </div>
+        
         <div
           style={{
             marginTop: 35,
@@ -124,7 +411,7 @@ export default function Home() {
             fontSize: 14,
           }}
         >
-          Desenvolvido para a Gincana EPA ✨
+          GERAÇÃO NOVA
         </div>
       </div>
     </main>
@@ -136,14 +423,16 @@ const botaoAzul = {
   padding: 18,
   borderRadius: 16,
   border: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 14,
   background:
     'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
   color: 'white',
   fontSize: 17,
   fontWeight: 'bold' as const,
   cursor: 'pointer',
-  transition: '0.3s',
-  boxShadow: '0 6px 20px rgba(37,99,235,0.35)',
 }
 
 const botaoVerde = {
@@ -151,14 +440,16 @@ const botaoVerde = {
   padding: 18,
   borderRadius: 16,
   border: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 14,
   background:
     'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
   color: 'white',
   fontSize: 17,
   fontWeight: 'bold' as const,
   cursor: 'pointer',
-  transition: '0.3s',
-  boxShadow: '0 6px 20px rgba(22,163,74,0.35)',
 }
 
 const botaoLogout = {
