@@ -294,7 +294,18 @@ export default function Home() {
             <BarChart3 size={22} />
               <strong>Estatísticas da Gincana</strong>
             </h3>
-
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <BadgeCheck size={18} />
+               <strong>+ Presença </strong> 
+                {melhorPresenca || '-'}
+              </div>
+              
               <div
                 style={{
                   display: 'flex',
@@ -303,7 +314,7 @@ export default function Home() {
                 }}
               >
                 <BookOpen size={18} />
-                <strong> Mais leva Bíblia </strong>
+                <strong> + Bíblia </strong>
                   {maisBiblia || '-'} 
                 </div>
 
@@ -315,21 +326,10 @@ export default function Home() {
                 }}
               >
                 <UserPlus size={18} />
-                <strong> Mais trouxe visitantes </strong>
+                <strong> + Visitantes </strong>
                   {maisVisitantes || '-'}
               </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <BadgeCheck size={18} />
-               <strong>Melhor presença </strong> 
-                {melhorPresenca || '-'}
-              </div>
+             
           </div>            
         <div
           style={{
